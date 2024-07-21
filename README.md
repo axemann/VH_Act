@@ -1,29 +1,29 @@
-## Настройка сервера USB Hasp на базе Ubuntu Server 16.04 LTS (xenial)
-###### !АХТУНГ! Использовалась версия Ubuntu Server 16.04 LTS x86_64 с версией ядра linux-image-4.4.0-210-generic
+## Configuring a USB Hasp server based on Ubuntu Server 16.04 LTS (
+a) ###### !ACHTUNG! Ubuntu Server version 16.04 LTS x86_64 was used with the linux kernel version-image-4.4.0-210- generic
 
-## 1. Подготовка 
-###### 1.1. Установка необходимого софта
+## 1. Preparation 
+###### 1.1. Installing the necessary software
 ```sh
 sudo apt update
 sudo apt install gcc g++ make libjansson-dev libusb-dev libc6-i386 libssl-dev git
 ```
 
-###### 1.2. Установка компонентов ядра
+###### 1.2. Installing Kernel Components
 ```sh
 sudo apt update
 sudo apt install linux-headers-`uname -r`
 sudo apt install linux-tools-lts-xenial
 ```
 
-###### 1.3. Клонирование этого репозитория
+###### 1.3. Cloning this repository
 ```sh
 cd /usr/src
 git clone https://github.com/rusishsoft/VH_Act.git
 cd ./VH_Act
 ```
 
-###### 1.4. Установка HASP Daemod (haspd)
-###### !АХТУНГ №2! Несмотря на название архитектуры в имени пакета, haspd - 32-битный компонент
+###### 1.4. Installing HASP Daemod (haspd)
+###### !ACHTUNG No. 2! Despite the architecture name in the package name, haspd is a 32-bit component
 
 ```sh
 cd ./haspd
@@ -32,8 +32,8 @@ sudo dpkg -i haspd-modules_7.90-eter2ubuntu_amd64.deb
 cd ../
 ```
 
-## 2. Сборка из исходных кодов компонентов ядра и их установка
-###### 2.1. Сборка и установка VHCI HCD
+## 2. Build from the source code of the kernel components and install them
+###### 2.1. VHCI HCD Assembly and Installation
 ```sh
 KVER=`uname -r`
 cd ./vhci-hcd
@@ -52,7 +52,7 @@ sudo tee -a /etc/modules <<< "usb_vhci_iocifc"
 sudo modprobe usb_vhci_iocifc
 ```
 
-###### 2.2. Сборка и установка LibUSB VHCI
+###### 2.2. Building and installing LibUSB VHCI
 ```sh
 cd ../libusb_vhci
 sudo ./configure
@@ -64,7 +64,7 @@ sudo tee /etc/ld.so.conf.d/libusb_vhci.conf <<< "/usr/local/lib"
 sudo ldconfig
 ```
 
-###### 2.3. Сборка и установка UsbHaspEmul
+###### 2.3. UsbHaspEmul Assembly and Installation
 ```sh
 cd ../UsbHasp
 sudo make -s
@@ -73,11 +73,11 @@ sudo cp dist/Release/GNU-Linux/usbhasp /usr/local/sbin
 sudo mkdir /etc/usbhaspkey/
 ```
 
-Создадим unit usbhaspemul.service
+Let's create a unit usbhaspemul.service
 ```sh
 sudo nano /etc/systemd/system/usbhaspemul.service
 ```
-и добавим в него следующее содержимое
+and add the following content to it
 ```unit
 [Unit]
 Description=Emulation HASP key for 1C
@@ -91,79 +91,79 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-###### 2.4. Добавление в автозагрузку демона UsbHaspEmul
+###### 2.4. Adding the UsbHaspEmul daemon to the startup
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl enable usbhaspemul
 ```
 
-###### 2.5. Загрузка дампов ключей в директорию /etc/usbhaspkeys
+###### 2.5. Uploading key dumps to the /etc/usbhaspkeys directory
 ```sh
 cd ../dumps
 sudo cp ./1c_server_x64.json /etc/usbhaspkey/
 sudo cp ./50user.json /etc/usbhaspkey/
 ```
 
-###### 2.6. Запуск UsbHaspEmul
+###### 2.6. Launching UsbHaspEmul
 ```sh
 sudo systemctl start usbhaspemul
 sudo systemctl status usbhaspemul
 ```
 
-## 3. Установка и активация VirtualHere
-###### !АХТУНГ №3! Несмотря на разрядность ОС Ubuntu, VirtualHere устанавливается в 32-битном режиме
+## 3. Installing and activating VirtualHere
+###### !ACHTUNG No. 3! Despite the bit depth of the Ubuntu OS, VirtualHere is installed in 32-bit mode
 
-###### 3.1. Установка Linux-based серверной части
+###### 3.1. Installing the Linux-based backend
 ```sh
 cd ../VirtualHere
 sudo chmod +x ./install_server
 sudo ./install_server
 ```
 
-###### 3.2. Установка Windows-based клиентской части
-Для этого в данном репозитории в папке "WindowsClient" найдите файл, соответствующий вашей аритектуре:
+###### 3.2. Installing the Windows-based client part
+To do this, in this repository, in the "WindowsClient" folder, find the file corresponding to your architecture:
 * Windows (x86) - vhui32.exe
 * Windows (x64) - vhui64.exe
 * Windows (ARM64) - vhuiarm64.exe
 
-Скачайте и запустите файл.
-В открышемся окне выберите обнаруженный хаб, щекните ПКМ и в меню щелните пункт "License".
-В открывшемся окне выделите и скопируте значение серийного номера:
+Download and run the file.
+In the window that opens, select the detected hub, tickle the PCM and click "License" in the menu.
+In the window that opens, select and copy the serial number value:
 Desktop Hub,s/n=```FE17189D-5211-C848-A448-788475CB15C8```,20 devices
-Этот номер потребуется для активации сервера VirtualHere
+This number is required to activate the VirtualHere server
 
-###### 3.3. [Х]Активация программы
+###### 3.3. [X]Program activation
 ```sh
 sudo systemctl stop virtualhere.service
 sudo gcc ./activator.c -lcrypto -o ./activator
-sudo ./activator /usr/local/sbin/vhusbdi386 <НАШ СКОПРОВАННЫЙ СЕРИЙНЫЙ НОМЕР>
+sudo ./activator /usr/local/sbin/vhusbdi386 <OUR COPIED SERIAL NUMBER>
 ```
 
-###### 3.4. [Х]Активация программы. Добавление ключа в конфиг Virtual Here
-Получивуюся строку вида:
+###### 3.4. [X]Activation of the program. Adding a key to the Virtual Here config
+The resulting string looks like:
 ```License=FE17189D-5211-C848-A448-788475CB15C8,20,MCECDwCdc5KISTF+TCfw6p6JJAIOS+CN+M5yfpp5LTXMofY=```
-необходимо добавить в конфиг Virtual Here, который в Ubuntu Server хранится в следующем каталоге:
+must be added to the Virtual Here config, which is stored in the following directory in Ubuntu Server:
 ```/usr/local/etc/virtualhere/config.ini```
 
-Для этого скопируйте строку лицензии, и вставьте в конец конфига Virtual Here
+To do this, copy the license string and paste it at the end of the Virtual Here config
 
 ```sh
 nano /usr/local/etc/virtualhere/config.ini
 ```
 
-или используйте команду:
+or use the command:
 
 ```sh
 sudo tee /usr/local/etc/virtualhere/config.ini <<< "License=FE17189D-5211-C848-A448-788475CB15C8,20,MCECDwCdc5KISTF+TCfw6p6JJAIOS+CN+M5yfpp5LTXMofY="
 
 ```
 
-###### 3.5. Запуск Virtual Here
+###### 3.5. Launching Virtual Here
 ```sh
 sudo systemctl start virtualhere.service
 sudo systemctl status virtualhere.service
 ```
 
-## 4. Юзаем
-При успешном выполнении вышеописанных шагов можно перезагрузить сервер ключей и перейти к использованию.
-Для этого в клиенте щелкните ПКМ по строке устройства и в открывшемся меню щелкните "Start using this device"
+## 4. Using
+If the above steps are completed successfully, you can restart the key server and proceed to use it.
+To do this, click on the device row in the client and click "Start using this device" in the menu that opens
